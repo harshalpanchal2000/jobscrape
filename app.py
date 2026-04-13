@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-from scraper import scrape_jobs, scrape_job_description, TIME_FILTERS, EXPERIENCE_FILTERS
+from scraper import scrape_jobs, scrape_job_description, filter_jobs_by_relevance, TIME_FILTERS, EXPERIENCE_FILTERS
 from exporter import export_to_excel
 
 # ── Page config ──────────────────────────────────────────────────────────────
@@ -134,6 +134,11 @@ if search_btn:
                 progress_callback=update_progress,
             )
 
+            # Filter out irrelevant results before fetching JDs
+            original_count = len(jobs)
+            jobs = filter_jobs_by_relevance(jobs, keywords)
+            removed = original_count - len(jobs)
+
             if fetch_jd and jobs:
                 progress_bar.progress(1.0, text="Fetching job descriptions...")
                 jd_progress = st.progress(0, text="Fetching descriptions...")
@@ -156,7 +161,9 @@ if search_btn:
         if jobs:
             jd_fetched = sum(1 for j in jobs if j.get("description") and j["description"] != "[Failed to fetch]")
             jd_failed = sum(1 for j in jobs if j.get("description") == "[Failed to fetch]")
-            msg = f"Found {len(jobs)} jobs!"
+            msg = f"Found {len(jobs)} relevant jobs!"
+            if removed:
+                msg += f" (filtered out {removed} irrelevant)"
             if fetch_jd:
                 msg += f" JDs fetched: {jd_fetched}/{len(jobs)}."
             st.success(msg)

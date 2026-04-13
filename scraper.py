@@ -105,6 +105,18 @@ def scrape_jobs(keywords, location="", num_pages=2, time_filter="Any time",
     return jobs
 
 
+def filter_jobs_by_relevance(jobs, keywords):
+    """Remove jobs whose title doesn't contain any of the search keywords.
+
+    Splits keywords into individual words (ignoring short words ≤ 2 chars)
+    and keeps only jobs where the title contains at least one keyword.
+    """
+    words = [w.strip().lower() for w in keywords.split() if len(w.strip()) > 2]
+    if not words:
+        return jobs
+    return [j for j in jobs if any(w in j["title"].lower() for w in words)]
+
+
 def scrape_job_description(url, max_retries=2):
     """Fetch the full job description from a LinkedIn job posting URL.
 
