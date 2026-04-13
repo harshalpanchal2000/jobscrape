@@ -70,25 +70,42 @@ with st.sidebar:
     keywords = st.text_input("Job Keywords", placeholder="e.g. Data Scientist, Python Developer")
     location = st.text_input("Location", placeholder="e.g. New York, Remote, India")
 
+    st.markdown("##### Search Mode")
+    search_mode = st.radio(
+        "Keyword matching",
+        ["Exact phrase", "Any of these words"],
+        index=0,
+        help="**Exact phrase**: searches for \"data analyst\" as a whole. "
+             "**Any of these words**: matches jobs containing \"data\" OR \"analyst\".",
+    )
+
     st.markdown("##### Filters")
     time_filter = st.selectbox("Date Posted", list(TIME_FILTERS.keys()), index=1,
                                help="Filter jobs by when they were posted")
-    experience_level = st.selectbox("Experience Level", list(EXPERIENCE_FILTERS.keys()),
-                                    help="Filter by seniority level")
+
+    # Multi-select experience levels (exclude "Any" from choices — leave empty for any)
+    exp_options = [k for k in EXPERIENCE_FILTERS.keys() if k != "Any"]
+    experience_levels = st.multiselect(
+        "Experience Level",
+        exp_options,
+        default=[],
+        help="Select one or more levels. Leave empty for all levels.",
+    )
 
     num_pages = st.slider("Pages to scrape", min_value=1, max_value=50, value=2,
                           help="Each page returns ~25 jobs. 50 pages = ~1250 jobs max.")
     fetch_jd = st.checkbox("Fetch job descriptions", value=True,
-                           help="Extracts full JD from each listing (included in Excel export)")
+                           help="Extracts full JD from each listing (included in Excel export). "
+                                "Adds ~2s per job for rate-limit safety.")
 
     search_btn = st.button("🔍 Search Jobs", type="primary", use_container_width=True)
 
     st.markdown("---")
     st.markdown("**Tips:**")
-    st.markdown("- Default: **Past 24 hours** for fresh listings")
+    st.markdown("- **Exact phrase** avoids unrelated results")
+    st.markdown("- Select multiple experience levels at once")
     st.markdown("- JD fetch is ON by default for Excel export")
-    st.markdown("- More pages = more jobs but slower scraping")
-    st.markdown("- ~1.5s delay per page to avoid rate limits")
+    st.markdown("- ~2s delay per JD to avoid rate limits")
 
 # ── Session state ────────────────────────────────────────────────────────────
 if "jobs" not in st.session_state:
@@ -108,21 +125,27 @@ if search_btn:
                     text=f"Scraping page {current} of {total}..."
                 )
 
+            exact_match = search_mode == "Exact phrase"
             jobs = scrape_jobs(
                 keywords, location, num_pages,
                 time_filter=time_filter,
-                experience_level=experience_level,
+                experience_levels=experience_levels,
+                exact_match=exact_match,
                 progress_callback=update_progress,
             )
 
             if fetch_jd and jobs:
                 progress_bar.progress(1.0, text="Fetching job descriptions...")
                 jd_progress = st.progress(0, text="Fetching descriptions...")
+                failed_count = 0
                 for i, job in enumerate(jobs):
                     job["description"] = scrape_job_description(job["url"])
+                    if job["description"] == "[Failed to fetch]":
+                        failed_count += 1
                     jd_progress.progress(
                         (i + 1) / len(jobs),
-                        text=f"Fetching JD {i + 1} of {len(jobs)}..."
+                        text=f"Fetching JD {i + 1} of {len(jobs)}"
+                             f"{f' ({failed_count} failed)' if failed_count else ''}..."
                     )
                 jd_progress.empty()
 
@@ -131,7 +154,14 @@ if search_btn:
         st.session_state.jobs = jobs
 
         if jobs:
-            st.success(f"Found {len(jobs)} jobs!")
+            jd_fetched = sum(1 for j in jobs if j.get("description") and j["description"] != "[Failed to fetch]")
+            jd_failed = sum(1 for j in jobs if j.get("description") == "[Failed to fetch]")
+            msg = f"Found {len(jobs)} jobs!"
+            if fetch_jd:
+                msg += f" JDs fetched: {jd_fetched}/{len(jobs)}."
+            st.success(msg)
+            if jd_failed:
+                st.warning(f"{jd_failed} job descriptions failed to fetch (rate limited). Try again later for those.")
         else:
             st.warning("No jobs found. Try different keywords or location.")
 

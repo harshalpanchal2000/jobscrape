@@ -37,7 +37,7 @@ EXPERIENCE_FILTERS = {
 
 
 def scrape_jobs(keywords, location="", num_pages=2, time_filter="Any time",
-                experience_level="Any", progress_callback=None):
+                experience_levels=None, exact_match=True, progress_callback=None):
     """Scrape LinkedIn public job listings.
 
     Args:
@@ -45,12 +45,19 @@ def scrape_jobs(keywords, location="", num_pages=2, time_filter="Any time",
         location: City, state, or country.
         num_pages: Number of pages to scrape (25 jobs per page).
         time_filter: One of TIME_FILTERS keys (e.g. "Past 24 hours").
-        experience_level: One of EXPERIENCE_FILTERS keys (e.g. "Entry level").
+        experience_levels: List of EXPERIENCE_FILTERS keys (e.g. ["Entry level", "Associate"]).
+        exact_match: If True, search for the exact phrase (wraps in quotes).
         progress_callback: Optional callable(current_page, total_pages) for UI updates.
 
     Returns:
         List of dicts with job data.
     """
+    if experience_levels is None:
+        experience_levels = []
+
+    # Wrap keywords in quotes for exact phrase matching
+    search_keywords = f'"{keywords}"' if exact_match and keywords else keywords
+
     jobs = []
 
     for page in range(num_pages):
@@ -59,7 +66,7 @@ def scrape_jobs(keywords, location="", num_pages=2, time_filter="Any time",
 
         start = page * 25
         params = {
-            "keywords": keywords,
+            "keywords": search_keywords,
             "location": location,
             "start": start,
         }
@@ -69,10 +76,14 @@ def scrape_jobs(keywords, location="", num_pages=2, time_filter="Any time",
         if time_code:
             params["f_TPR"] = time_code
 
-        # Add experience level filter (f_E = experience)
-        exp_code = EXPERIENCE_FILTERS.get(experience_level, "")
-        if exp_code:
-            params["f_E"] = exp_code
+        # Add experience level filter (f_E supports comma-separated codes)
+        exp_codes = [
+            EXPERIENCE_FILTERS[lvl]
+            for lvl in experience_levels
+            if lvl in EXPERIENCE_FILTERS and EXPERIENCE_FILTERS[lvl]
+        ]
+        if exp_codes:
+            params["f_E"] = ",".join(exp_codes)
 
         try:
             resp = requests.get(BASE_URL, params=params, headers=HEADERS, timeout=15)
@@ -94,19 +105,38 @@ def scrape_jobs(keywords, location="", num_pages=2, time_filter="Any time",
     return jobs
 
 
-def scrape_job_description(url):
-    """Fetch the full job description from a LinkedIn job posting URL."""
-    try:
-        resp = requests.get(url, headers=HEADERS, timeout=15)
-        resp.raise_for_status()
-    except requests.RequestException:
+def scrape_job_description(url, max_retries=2):
+    """Fetch the full job description from a LinkedIn job posting URL.
+
+    Includes rate-limiting delay and retry logic to avoid 429 errors.
+    """
+    for attempt in range(max_retries):
+        # Rate-limiting delay before each request
+        time.sleep(2)
+
+        try:
+            resp = requests.get(url, headers=HEADERS, timeout=15)
+
+            # Handle rate limiting explicitly
+            if resp.status_code == 429:
+                wait_time = 5 * (attempt + 1)  # 5s, then 10s
+                time.sleep(wait_time)
+                continue
+
+            resp.raise_for_status()
+        except requests.RequestException:
+            if attempt < max_retries - 1:
+                time.sleep(5)
+                continue
+            return "[Failed to fetch]"
+
+        soup = BeautifulSoup(resp.text, "lxml")
+        desc_div = soup.find("div", class_="show-more-less-html__markup")
+        if desc_div:
+            return desc_div.get_text(separator="\n", strip=True)
         return ""
 
-    soup = BeautifulSoup(resp.text, "lxml")
-    desc_div = soup.find("div", class_="show-more-less-html__markup")
-    if desc_div:
-        return desc_div.get_text(separator="\n", strip=True)
-    return ""
+    return "[Failed to fetch]"
 
 
 def _parse_card(card):
