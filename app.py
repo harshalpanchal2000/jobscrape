@@ -238,14 +238,14 @@ st.markdown("""
     .footer {
         position: fixed;
         bottom: 0;
-        left: 0;
+        right: 0;
         padding: 12px 24px;
-        text-align: left;
+        text-align: right;
         z-index: 999;
         background: #ece5db;
-        border-top-right-radius: 8px;
+        border-top-left-radius: 8px;
         border-top: 1px solid #d4cdc4;
-        border-right: 1px solid #d4cdc4;
+        border-left: 1px solid #d4cdc4;
     }
     .footer-made {
         font-family: 'Inter', sans-serif;
