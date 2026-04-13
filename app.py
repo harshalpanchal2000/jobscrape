@@ -27,10 +27,15 @@ st.markdown("""
         background-color: #ece5db;
         border-right: 1px solid #d4cdc4;
     }
+
+    /* ── Force dark text on all sidebar elements ──────────── */
+    section[data-testid="stSidebar"] * {
+        color: #3a3530 !important;
+    }
     section[data-testid="stSidebar"] .stMarkdown p,
     section[data-testid="stSidebar"] .stMarkdown li {
         font-family: 'Inter', sans-serif;
-        color: #4a4540;
+        color: #4a4540 !important;
         font-size: 0.85rem;
     }
     section[data-testid="stSidebar"] h2 {
@@ -38,6 +43,49 @@ st.markdown("""
         color: #1a1815 !important;
         font-weight: 700 !important;
         letter-spacing: -0.3px;
+    }
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] .stRadio label,
+    section[data-testid="stSidebar"] .stCheckbox label,
+    section[data-testid="stSidebar"] .stSelectbox label,
+    section[data-testid="stSidebar"] .stMultiSelect label,
+    section[data-testid="stSidebar"] .stSlider label,
+    section[data-testid="stSidebar"] .stTextInput label {
+        color: #3a3530 !important;
+    }
+    section[data-testid="stSidebar"] input,
+    section[data-testid="stSidebar"] select,
+    section[data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span,
+    section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="select"] span {
+        color: #1a1815 !important;
+    }
+    section[data-testid="stSidebar"] input::placeholder {
+        color: #8a8279 !important;
+    }
+    /* Sidebar button */
+    section[data-testid="stSidebar"] .stButton button[kind="primary"] {
+        background-color: #1a1815 !important;
+        color: #f5f0ea !important;
+        border: none !important;
+    }
+    section[data-testid="stSidebar"] .stButton button[kind="primary"]:hover {
+        background-color: #2c2823 !important;
+    }
+
+    /* ── Force dark text on main area elements ────────────── */
+    .stApp label,
+    .stApp .stTextInput label,
+    .stApp .stSelectbox label {
+        color: #3a3530 !important;
+    }
+    .stApp input {
+        color: #1a1815 !important;
+    }
+    .stApp input::placeholder {
+        color: #8a8279 !important;
+    }
+    .stApp .stSelectbox [data-baseweb="select"] span {
+        color: #1a1815 !important;
     }
 
     /* ── Header ───────────────────────────────────────────── */
