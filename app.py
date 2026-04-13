@@ -92,6 +92,19 @@ with st.sidebar:
         help="Select one or more levels. Leave empty for all levels.",
     )
 
+    st.markdown("##### Company Filter")
+    include_companies_input = st.text_input(
+        "Include only these companies",
+        placeholder="e.g. Google, Microsoft, Amazon",
+        help="Comma-separated. Only show jobs from these companies. Leave empty for all.",
+    )
+    exclude_companies_input = st.text_input(
+        "Exclude these companies",
+        placeholder="e.g. Infosys, Wipro, Staffing Inc",
+        help="Comma-separated. Hide jobs from these companies.",
+    )
+
+    st.markdown("##### Scraping")
     num_pages = st.slider("Pages to scrape", min_value=1, max_value=50, value=2,
                           help="Each page returns ~25 jobs. 50 pages = ~1250 jobs max.")
     fetch_jd = st.checkbox("Fetch job descriptions", value=True,
@@ -104,7 +117,7 @@ with st.sidebar:
     st.markdown("**Tips:**")
     st.markdown("- **Exact phrase** avoids unrelated results")
     st.markdown("- Select multiple experience levels at once")
-    st.markdown("- JD fetch is ON by default for Excel export")
+    st.markdown("- Company filters are case-insensitive")
     st.markdown("- ~2s delay per JD to avoid rate limits")
 
 # ── Session state ────────────────────────────────────────────────────────────
@@ -137,6 +150,15 @@ if search_btn:
             # Filter out irrelevant results before fetching JDs
             original_count = len(jobs)
             jobs = filter_jobs_by_relevance(jobs, keywords)
+
+            # Apply company include/exclude filters
+            inc = [c.strip().lower() for c in include_companies_input.split(",") if c.strip()]
+            exc = [c.strip().lower() for c in exclude_companies_input.split(",") if c.strip()]
+            if inc:
+                jobs = [j for j in jobs if any(c in j["company"].lower() for c in inc)]
+            if exc:
+                jobs = [j for j in jobs if not any(c in j["company"].lower() for c in exc)]
+
             removed = original_count - len(jobs)
 
             if fetch_jd and jobs:
@@ -186,33 +208,10 @@ if jobs:
         locations = sorted(set(j["location"] for j in jobs if j["location"] != "N/A"))
         filter_location = st.selectbox("Filter by location", ["All"] + locations)
 
-    # Company filters
-    companies = sorted(set(j["company"] for j in jobs if j["company"] != "N/A"))
-    col_inc, col_exc = st.columns(2)
-
-    with col_inc:
-        include_companies = st.multiselect(
-            "Include only these companies",
-            companies,
-            default=[],
-            help="Leave empty to include all. Select specific companies to ONLY show those.",
-        )
-    with col_exc:
-        exclude_companies = st.multiselect(
-            "Exclude these companies",
-            companies,
-            default=[],
-            help="Select companies to hide from results (e.g. staffing agencies).",
-        )
-
     # Apply filters
     filtered = jobs
     if filter_title:
         filtered = [j for j in filtered if filter_title.lower() in j["title"].lower()]
-    if include_companies:
-        filtered = [j for j in filtered if j["company"] in include_companies]
-    if exclude_companies:
-        filtered = [j for j in filtered if j["company"] not in exclude_companies]
     if filter_location != "All":
         filtered = [j for j in filtered if j["location"] == filter_location]
 
