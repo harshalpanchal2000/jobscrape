@@ -178,23 +178,41 @@ jobs = st.session_state.jobs
 if jobs:
     # ── Filters ──────────────────────────────────────────────────────────────
     st.subheader("Filter Results")
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
 
     with col1:
         filter_title = st.text_input("Filter by title", placeholder="e.g. Senior, Manager")
     with col2:
-        companies = sorted(set(j["company"] for j in jobs if j["company"] != "N/A"))
-        filter_company = st.selectbox("Filter by company", ["All"] + companies)
-    with col3:
         locations = sorted(set(j["location"] for j in jobs if j["location"] != "N/A"))
         filter_location = st.selectbox("Filter by location", ["All"] + locations)
+
+    # Company filters
+    companies = sorted(set(j["company"] for j in jobs if j["company"] != "N/A"))
+    col_inc, col_exc = st.columns(2)
+
+    with col_inc:
+        include_companies = st.multiselect(
+            "Include only these companies",
+            companies,
+            default=[],
+            help="Leave empty to include all. Select specific companies to ONLY show those.",
+        )
+    with col_exc:
+        exclude_companies = st.multiselect(
+            "Exclude these companies",
+            companies,
+            default=[],
+            help="Select companies to hide from results (e.g. staffing agencies).",
+        )
 
     # Apply filters
     filtered = jobs
     if filter_title:
         filtered = [j for j in filtered if filter_title.lower() in j["title"].lower()]
-    if filter_company != "All":
-        filtered = [j for j in filtered if j["company"] == filter_company]
+    if include_companies:
+        filtered = [j for j in filtered if j["company"] in include_companies]
+    if exclude_companies:
+        filtered = [j for j in filtered if j["company"] not in exclude_companies]
     if filter_location != "All":
         filtered = [j for j in filtered if j["location"] == filter_location]
 
