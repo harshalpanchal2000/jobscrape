@@ -62,14 +62,19 @@ st.markdown("""
     section[data-testid="stSidebar"] input::placeholder {
         color: #8a8279 !important;
     }
-    /* Sidebar button */
-    section[data-testid="stSidebar"] .stButton button[kind="primary"] {
+    /* Sidebar button — white text on dark button */
+    section[data-testid="stSidebar"] .stButton button,
+    section[data-testid="stSidebar"] .stButton button *,
+    section[data-testid="stSidebar"] .stButton button p,
+    section[data-testid="stSidebar"] .stButton button span {
         background-color: #1a1815 !important;
-        color: #f5f0ea !important;
+        color: #ffffff !important;
         border: none !important;
     }
-    section[data-testid="stSidebar"] .stButton button[kind="primary"]:hover {
+    section[data-testid="stSidebar"] .stButton button:hover,
+    section[data-testid="stSidebar"] .stButton button:hover * {
         background-color: #2c2823 !important;
+        color: #ffffff !important;
     }
 
     /* ── Force dark text on main area elements ────────────── */
@@ -233,14 +238,14 @@ st.markdown("""
     .footer {
         position: fixed;
         bottom: 0;
-        right: 0;
+        left: 0;
         padding: 12px 24px;
-        text-align: right;
+        text-align: left;
         z-index: 999;
         background: #ece5db;
-        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
         border-top: 1px solid #d4cdc4;
-        border-left: 1px solid #d4cdc4;
+        border-right: 1px solid #d4cdc4;
     }
     .footer-made {
         font-family: 'Inter', sans-serif;
