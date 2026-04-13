@@ -55,6 +55,35 @@ st.markdown("""
         border-radius: 8px;
         text-align: center;
     }
+    .footer {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        padding: 14px 28px;
+        text-align: right;
+        z-index: 999;
+        background: linear-gradient(135deg, #f5f0eb 0%, #ece5dd 100%);
+        border-top-left-radius: 12px;
+        border-top: 1px solid #d4cdc4;
+        border-left: 1px solid #d4cdc4;
+        box-shadow: -2px -2px 8px rgba(0,0,0,0.04);
+    }
+    .footer-made {
+        font-family: 'Georgia', 'Times New Roman', serif;
+        font-size: 0.82rem;
+        color: #1a1a1a;
+        letter-spacing: 0.3px;
+        margin-bottom: 2px;
+    }
+    .footer-made span {
+        font-weight: 600;
+    }
+    .footer-copyright {
+        font-family: 'Georgia', 'Times New Roman', serif;
+        font-size: 0.7rem;
+        color: #6b6259;
+        letter-spacing: 0.5px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -268,3 +297,11 @@ else:
         <p>Enter job keywords and location in the sidebar, then click <b>Search Jobs</b> to get started.</p>
     </div>
     """, unsafe_allow_html=True)
+
+# ── Footer ───────────────────────────────────────────────────────────────────
+st.markdown("""
+<div class="footer">
+    <div class="footer-made">Made by <span>Harshal Panchal</span></div>
+    <div class="footer-copyright">&copy; 2025 Suntrail AI Labs Inc.</div>
+</div>
+""", unsafe_allow_html=True)
